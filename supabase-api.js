@@ -23,7 +23,8 @@ function getSupabase() {
 async function fetchStats() {
     const { data, error } = await getSupabase()
         .from('resultados_paes')
-        .select('*');
+        .select('*')
+        .range(0, 2000);  // Supabase default limit is 1000, we need all 1601
 
     if (error) {
         console.error('Error fetching stats:', error);
@@ -46,7 +47,8 @@ async function fetchStats() {
 async function fetchStatsByRbd(limit = 8) {
     const { data, error } = await getSupabase()
         .from('resultados_paes')
-        .select('rbd, clec_reg_actual, mate1_reg_actual, mate2_reg_actual, hcsoc_reg_actual, cien_reg_actual');
+        .select('rbd, clec_reg_actual, mate1_reg_actual, mate2_reg_actual, hcsoc_reg_actual, cien_reg_actual')
+        .range(0, 2000);
 
     if (error) return [];
 
@@ -89,7 +91,8 @@ async function fetchStatsByRbdFiltered(rbds) {
     const { data, error } = await getSupabase()
         .from('resultados_paes')
         .select('rbd, clec_reg_actual, mate1_reg_actual, mate2_reg_actual, hcsoc_reg_actual, cien_reg_actual')
-        .in('rbd', rbds);
+        .in('rbd', rbds)
+        .range(0, 2000);
 
     if (error) return [];
 
@@ -123,7 +126,8 @@ async function fetchDistribution() {
     const { data, error } = await getSupabase()
         .from('resultados_paes')
         .select('clec_reg_actual')
-        .gt('clec_reg_actual', 0);
+        .gt('clec_reg_actual', 0)
+        .range(0, 2000);
 
     if (error) return [];
 
@@ -150,7 +154,8 @@ async function fetchDistribution() {
 async function fetchByRama() {
     const { data, error } = await getSupabase()
         .from('resultados_paes')
-        .select('rama_educacional, promedio_notas');
+        .select('rama_educacional, promedio_notas')
+        .range(0, 2000);
 
     if (error) return [];
 
@@ -177,7 +182,8 @@ async function fetchByRama() {
 async function fetchComparison() {
     const { data, error } = await getSupabase()
         .from('resultados_paes')
-        .select('clec_reg_actual, mate1_reg_actual, cien_reg_actual, clec_reg_anterior, mate1_reg_anterior');
+        .select('clec_reg_actual, mate1_reg_actual, cien_reg_actual, clec_reg_anterior, mate1_reg_anterior')
+        .range(0, 2000);
 
     if (error) return [];
 
@@ -218,7 +224,8 @@ async function fetchRankingPaes() {
         .from('resultados_paes')
         .select('*')
         .gt('clec_reg_actual', 0)
-        .gt('mate1_reg_actual', 0);
+        .gt('mate1_reg_actual', 0)
+        .range(0, 2000);
 
     if (error) return [];
 
@@ -235,7 +242,8 @@ async function fetchRankingPaes() {
 async function fetchBestByRbd() {
     const { data, error } = await getSupabase()
         .from('resultados_paes')
-        .select('rbd, promedio_notas, clec_reg_actual, mate1_reg_actual');
+        .select('rbd, promedio_notas, clec_reg_actual, mate1_reg_actual')
+        .range(0, 2000);
 
     if (error) return [];
 
@@ -263,7 +271,8 @@ async function fetchBestByRbd() {
 async function fetchFilters() {
     const { data, error } = await getSupabase()
         .from('resultados_paes')
-        .select('rbd, codigo_comuna, rama_educacional');
+        .select('rbd, codigo_comuna, rama_educacional')
+        .range(0, 2000);
 
     if (error) return { rbds: [], comunas: [], ramas: [] };
 
@@ -288,7 +297,7 @@ async function fetchFiltered(filters) {
         query = query.eq('rama_educacional', filters.rama);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.range(0, 2000);
 
     if (error) return null;
 
