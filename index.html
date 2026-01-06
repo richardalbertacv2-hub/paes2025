@@ -31,9 +31,14 @@
                     <span>Andalién Sur - Resultados Consolidados</span>
                 </div>
             </div>
-            <button id="btnExportPdf" class="btn-export" onclick="exportToPdf()">
-                <span>📄</span> Exportar PDF
-            </button>
+            <div class="header-actions">
+                <button id="btnThemeToggle" class="btn-theme" onclick="toggleTheme()" title="Cambiar tema">
+                    <span id="themeIcon">🌙</span>
+                </button>
+                <button id="btnExportPdf" class="btn-export" onclick="exportToPdf()">
+                    <span>📄</span> Exportar PDF
+                </button>
+            </div>
         </div>
     </header>
 
@@ -225,6 +230,31 @@
         document.getElementById('footerDate').textContent = new Date().toLocaleDateString('es-CL', {
             day: 'numeric', month: 'long', year: 'numeric'
         });
+
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('themeIcon');
+
+            body.classList.toggle('light-mode');
+
+            if (body.classList.contains('light-mode')) {
+                icon.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            } else {
+                icon.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme
+        (function () {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('themeIcon').textContent = '☀️';
+            }
+        })();
     </script>
 </body>
 

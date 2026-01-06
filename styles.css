@@ -17,6 +17,19 @@
     --border-color: rgba(148, 163, 184, 0.2);
     --glass: rgba(255, 255, 255, 0.05);
     --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+}
+
+/* Light Mode Variables */
+body.light-mode {
+    --bg-dark: #f8fafc;
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: rgba(148, 163, 184, 0.3);
+    --glass: rgba(255, 255, 255, 0.8);
+    --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
 }
 
 * {
@@ -27,10 +40,11 @@
 
 body {
     font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-    background: linear-gradient(135deg, var(--bg-dark) 0%, #1e1b4b 50%, #0f172a 100%);
+    background: var(--bg-gradient);
     color: var(--text-primary);
     min-height: 100vh;
     line-height: 1.6;
+    transition: background 0.4s ease, color 0.4s ease;
 }
 
 /* ========== Header ========== */
@@ -77,6 +91,38 @@ body {
 .logo-text span {
     font-size: 0.875rem;
     color: var(--text-secondary);
+}
+
+/* ========== Header Actions ========== */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-theme {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+}
+
+.btn-theme:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.btn-theme:active {
+    transform: translateY(0);
 }
 
 /* ========== Export Button ========== */
