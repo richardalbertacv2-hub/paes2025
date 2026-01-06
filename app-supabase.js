@@ -499,12 +499,12 @@ function getScoreClass(score) {
     return 'score-low';
 }
 
-// ========== PDF Export ==========
+// ========== PDF Export - Enhanced Version ==========
 async function exportToPdf() {
     const btn = document.getElementById('btnExportPdf');
     const originalText = btn.innerHTML;
 
-    btn.innerHTML = '<span>⏳</span> Generando...';
+    btn.innerHTML = '<span>⏳</span> Generando PDF...';
     btn.classList.add('loading');
 
     try {
@@ -512,92 +512,258 @@ async function exportToPdf() {
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-        const margin = 10;
+        const margin = 15;
+        const contentWidth = pageWidth - (margin * 2);
 
-        // Title page
+        // ========== PAGE 1: COVER & KPIs ==========
+        // Gradient background
         pdf.setFillColor(15, 23, 42);
         pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
-        pdf.setTextColor(241, 245, 249);
-        pdf.setFontSize(28);
-        pdf.text('Dashboard PAES 2025', pageWidth / 2, 60, { align: 'center' });
+        // Decorative top gradient bar
+        pdf.setFillColor(99, 102, 241);
+        pdf.rect(0, 0, pageWidth, 8, 'F');
+        pdf.setFillColor(139, 92, 246);
+        pdf.rect(0, 8, pageWidth, 4, 'F');
 
+        // Logo placeholder (circle with initials)
+        pdf.setFillColor(99, 102, 241);
+        pdf.circle(pageWidth / 2, 40, 15, 'F');
+        pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(16);
-        pdf.setTextColor(148, 163, 184);
-        pdf.text('Andalién Sur - Resultados Consolidados', pageWidth / 2, 75, { align: 'center' });
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('AS', pageWidth / 2, 44, { align: 'center' });
 
+        // Title
+        pdf.setTextColor(241, 245, 249);
+        pdf.setFontSize(32);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Dashboard PAES 2025', pageWidth / 2, 70, { align: 'center' });
+
+        // Subtitle
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(148, 163, 184);
+        pdf.text('SLEP Andalién Sur - Resultados Consolidados', pageWidth / 2, 82, { align: 'center' });
+
+        // Date badge
         const date = new Date().toLocaleDateString('es-CL', {
             year: 'numeric', month: 'long', day: 'numeric'
         });
-        pdf.setFontSize(12);
-        pdf.text(`Generado: ${date}`, pageWidth / 2, 90, { align: 'center' });
+        pdf.setFillColor(34, 211, 238);
+        pdf.roundedRect(pageWidth / 2 - 30, 90, 60, 10, 3, 3, 'F');
+        pdf.setTextColor(15, 23, 42);
+        pdf.setFontSize(10);
+        pdf.text(date, pageWidth / 2, 97, { align: 'center' });
 
-        // KPIs
-        pdf.setFontSize(14);
+        // KPI Section Title
         pdf.setTextColor(34, 211, 238);
-        pdf.text('Resumen de Indicadores', margin, 120);
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('📊 Indicadores Principales', margin, 120);
 
-        pdf.setFontSize(11);
+        // KPI Cards
         const kpiData = [
-            ['Total Estudiantes', document.getElementById('kpiTotal').textContent],
-            ['Promedio CLEC', document.getElementById('kpiClec').textContent],
-            ['Promedio MATE1', document.getElementById('kpiMate').textContent],
-            ['Mejor NEM', document.getElementById('kpiMaxProm').textContent]
+            { icon: '👥', label: 'Total Estudiantes', value: document.getElementById('kpiTotal').textContent, color: [99, 102, 241] },
+            { icon: '📖', label: 'Promedio CLEC', value: document.getElementById('kpiClec').textContent, color: [34, 211, 238] },
+            { icon: '🔢', label: 'Promedio MATE1', value: document.getElementById('kpiMate').textContent, color: [16, 185, 129] },
+            { icon: '⭐', label: 'Mejor NEM', value: document.getElementById('kpiMaxProm').textContent, color: [245, 158, 11] }
         ];
 
-        let yPos = 130;
-        kpiData.forEach(([label, value]) => {
+        const cardWidth = (contentWidth - 15) / 2;
+        const cardHeight = 35;
+
+        kpiData.forEach((kpi, i) => {
+            const x = margin + (i % 2) * (cardWidth + 5);
+            const y = 130 + Math.floor(i / 2) * (cardHeight + 8);
+
+            // Card background
+            pdf.setFillColor(30, 41, 59);
+            pdf.roundedRect(x, y, cardWidth, cardHeight, 4, 4, 'F');
+
+            // Top accent bar
+            pdf.setFillColor(...kpi.color);
+            pdf.rect(x, y, cardWidth, 3, 'F');
+
+            // Label
             pdf.setTextColor(148, 163, 184);
-            pdf.text(label + ':', margin, yPos);
-            pdf.setTextColor(16, 185, 129);
-            pdf.text(value, margin + 50, yPos);
-            yPos += 8;
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(kpi.label.toUpperCase(), x + 8, y + 14);
+
+            // Value
+            pdf.setTextColor(241, 245, 249);
+            pdf.setFontSize(20);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(kpi.value, x + 8, y + 28);
         });
 
-        // Charts page
+        // ========== PAGE 2: CHARTS ==========
         pdf.addPage();
         pdf.setFillColor(15, 23, 42);
         pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
-        pdf.setTextColor(34, 211, 238);
-        pdf.setFontSize(14);
-        pdf.text('Gráficos de Análisis', margin, 15);
+        // Header
+        pdf.setFillColor(99, 102, 241);
+        pdf.rect(0, 0, pageWidth, 6, 'F');
 
+        pdf.setTextColor(34, 211, 238);
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('📈 Análisis Gráfico', margin, 20);
+
+        // Charts in 2x2 grid - larger size
         const charts = [
             { id: 'radarChart', title: 'Comparación por Establecimiento' },
-            { id: 'distributionChart', title: 'Distribución CLEC' },
-            { id: 'ramaChart', title: 'Por Rama Educacional' },
-            { id: 'comparisonChart', title: 'Actual vs Anterior' }
+            { id: 'distributionChart', title: 'Distribución de Puntajes CLEC' },
+            { id: 'ramaChart', title: 'Distribución por Rama Educacional' },
+            { id: 'comparisonChart', title: 'Proceso Actual vs Anterior' }
         ];
 
-        let chartY = 25;
-        const chartWidth = (pageWidth - margin * 3) / 2;
-        const chartHeight = 60;
+        const chartW = (contentWidth - 10) / 2;
+        const chartH = 75;
+        const startY = 30;
 
         for (let i = 0; i < charts.length; i++) {
             const canvas = document.getElementById(charts[i].id);
             if (canvas) {
-                const imgData = canvas.toDataURL('image/png', 1.0);
-                const x = (i % 2 === 0) ? margin : margin * 2 + chartWidth;
-                const y = chartY + Math.floor(i / 2) * (chartHeight + 15);
+                const x = margin + (i % 2) * (chartW + 10);
+                const y = startY + Math.floor(i / 2) * (chartH + 20);
 
-                pdf.setFontSize(9);
-                pdf.setTextColor(148, 163, 184);
-                pdf.text(charts[i].title, x, y - 2);
-                pdf.addImage(imgData, 'PNG', x, y, chartWidth, chartHeight);
+                // Chart card background
+                pdf.setFillColor(30, 41, 59);
+                pdf.roundedRect(x - 2, y - 2, chartW + 4, chartH + 14, 3, 3, 'F');
+
+                // Chart title
+                pdf.setTextColor(241, 245, 249);
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(charts[i].title, x, y + 6);
+
+                // Chart image
+                const imgData = canvas.toDataURL('image/png', 1.0);
+                pdf.addImage(imgData, 'PNG', x, y + 10, chartW, chartH - 5);
             }
         }
 
-        // Footer
+        // ========== PAGE 3: RANKING ==========
+        pdf.addPage();
+        pdf.setFillColor(15, 23, 42);
+        pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+
+        // Header
+        pdf.setFillColor(245, 158, 11);
+        pdf.rect(0, 0, pageWidth, 6, 'F');
+
+        pdf.setTextColor(245, 158, 11);
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('🏆 Cuadro de Honor - Top 10 Mejores Promedios', margin, 20);
+
+        // Get ranking data
+        const rankingData = await fetchRankingNotas();
+        if (rankingData && rankingData.length > 0) {
+            // Table header
+            const headers = ['#', 'RBD', 'Rama', 'Promedio', 'NEM', 'CLEC', 'MATE1'];
+            const colWidths = [12, 22, 25, 30, 28, 30, 30];
+            let tableY = 30;
+
+            // Header row
+            pdf.setFillColor(99, 102, 241);
+            pdf.roundedRect(margin, tableY - 5, contentWidth, 12, 2, 2, 'F');
+
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'bold');
+
+            let tableX = margin + 3;
+            headers.forEach((h, i) => {
+                pdf.text(h, tableX, tableY + 2);
+                tableX += colWidths[i];
+            });
+
+            tableY += 14;
+
+            // Data rows
+            const top10 = rankingData.slice(0, 10);
+            top10.forEach((item, idx) => {
+                // Alternating row colors
+                if (idx % 2 === 0) {
+                    pdf.setFillColor(30, 41, 59);
+                } else {
+                    pdf.setFillColor(38, 50, 72);
+                }
+                pdf.rect(margin, tableY - 4, contentWidth, 11, 'F');
+
+                // Medal for top 3
+                let rankText = (idx + 1).toString();
+                if (idx === 0) rankText = '🥇';
+                else if (idx === 1) rankText = '🥈';
+                else if (idx === 2) rankText = '🥉';
+
+                tableX = margin + 3;
+
+                // Rank
+                pdf.setTextColor(245, 158, 11);
+                pdf.setFontSize(10);
+                pdf.text(rankText, tableX, tableY + 3);
+                tableX += colWidths[0];
+
+                // Other columns
+                pdf.setTextColor(241, 245, 249);
+                pdf.setFontSize(9);
+                pdf.setFont('helvetica', 'normal');
+
+                const rowData = [
+                    item.rbd.toString(),
+                    (item.rama_educacional || 'H1').substring(0, 4),
+                    item.promedio_notas.toString(),
+                    item.ptje_nem.toString(),
+                    (item.clec_reg_actual || '-').toString(),
+                    (item.mate1_reg_actual || '-').toString()
+                ];
+
+                rowData.forEach((val, i) => {
+                    // Highlight promedio
+                    if (i === 2) {
+                        pdf.setTextColor(16, 185, 129);
+                        pdf.setFont('helvetica', 'bold');
+                    } else {
+                        pdf.setTextColor(241, 245, 249);
+                        pdf.setFont('helvetica', 'normal');
+                    }
+                    pdf.text(val, tableX, tableY + 3);
+                    tableX += colWidths[i + 1];
+                });
+
+                tableY += 11;
+            });
+        }
+
+        // ========== FOOTER ON ALL PAGES ==========
         const totalPages = pdf.internal.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
             pdf.setPage(i);
+
+            // Footer background
+            pdf.setFillColor(20, 30, 48);
+            pdf.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+
+            // Footer text
             pdf.setFontSize(8);
-            pdf.setTextColor(100);
-            pdf.text(`Página ${i} de ${totalPages}`, pageWidth - margin - 20, pageHeight - 5);
-            pdf.text('Dashboard PAES 2025 - Andalién Sur', margin, pageHeight - 5);
+            pdf.setTextColor(100, 116, 139);
+            pdf.text(`Página ${i} de ${totalPages}`, pageWidth - margin - 20, pageHeight - 6);
+            pdf.text('Dashboard PAES 2025 - SLEP Andalién Sur', margin, pageHeight - 6);
+
+            // Credits on page 1
+            if (i === 1) {
+                pdf.setTextColor(148, 163, 184);
+                pdf.setFontSize(8);
+                pdf.text('Generado por IA y Ricardo Acevedo Carrasco | Enero 2026', pageWidth / 2, pageHeight - 6, { align: 'center' });
+            }
         }
 
+        // Save PDF
         pdf.save(`Informe_PAES_2025_${new Date().toISOString().split('T')[0]}.pdf`);
 
     } catch (error) {
