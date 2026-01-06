@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard PAES 2025 | Andalién Sur</title>
+    <meta name="description"
+        content="Dashboard interactivo de resultados PAES 2025 con estadísticas, gráficos y ranking de honor">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="https://andaliensur.gob.cl/logo.svg" alt="Andalién Sur" class="logo-img">
+                <div class="logo-text">
+                    <h1>Dashboard PAES 2025</h1>
+                    <span>Andalién Sur - Resultados Consolidados</span>
+                </div>
+            </div>
+            <button id="btnExportPdf" class="btn-export" onclick="exportToPdf()">
+                <span>📄</span> Exportar PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- Tabs Navigation -->
+    <nav class="tabs">
+        <button class="tab-btn active" data-tab="dashboard">
+            <span>📈</span> Dashboard
+        </button>
+        <button class="tab-btn" data-tab="ranking">
+            <span>🏆</span> Cuadro de Honor
+        </button>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Dashboard Tab -->
+        <section id="dashboard" class="tab-content active">
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Establecimiento (RBD)</label>
+                    <div class="multi-select" id="rbdMultiSelect">
+                        <div class="multi-select-header" onclick="toggleMultiSelect('rbdMultiSelect')">
+                            <span id="rbdSelectedText">Todos los RBD</span>
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="multi-select-options" id="rbdOptions">
+                            <!-- Options will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label for="filterComuna">Comuna</label>
+                    <select id="filterComuna">
+                        <option value="">Todas las comunas</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterRama">Rama Educacional</label>
+                    <select id="filterRama">
+                        <option value="">Todas las ramas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-icon">👥</div>
+                    </div>
+                    <div class="kpi-label">Total Estudiantes</div>
+                    <div class="kpi-value" id="kpiTotal">-</div>
+                    <div class="kpi-subtitle">Registros en el sistema</div>
+                </div>
+                <div class="kpi-card accent">
+                    <div class="kpi-header">
+                        <div class="kpi-icon">📖</div>
+                    </div>
+                    <div class="kpi-label">Promedio CLEC</div>
+                    <div class="kpi-value" id="kpiClec">-</div>
+                    <div class="kpi-subtitle">Competencia Lectora</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-icon">🔢</div>
+                    </div>
+                    <div class="kpi-label">Promedio MATE1</div>
+                    <div class="kpi-value" id="kpiMate">-</div>
+                    <div class="kpi-subtitle">Matemáticas 1</div>
+                </div>
+                <div class="kpi-card warning">
+                    <div class="kpi-header">
+                        <div class="kpi-icon">⭐</div>
+                    </div>
+                    <div class="kpi-label">Mejor Promedio NEM</div>
+                    <div class="kpi-value" id="kpiMaxProm">-</div>
+                    <div class="kpi-subtitle">Nota máxima registrada</div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Radar Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Comparación por Establecimiento</div>
+                            <div class="chart-subtitle">Puntajes promedio por prueba (Top 8 RBD)</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Distribution Bar Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Distribución de Puntajes CLEC</div>
+                            <div class="chart-subtitle">Cantidad de estudiantes por rango</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Doughnut Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Distribución por Rama Educacional</div>
+                            <div class="chart-subtitle">Proporción de estudiantes</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="ramaChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Comparison Line Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Comparación: Proceso Actual vs Anterior</div>
+                            <div class="chart-subtitle">Evolución de puntajes promedio</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ranking Tab -->
+        <section id="ranking" class="tab-content">
+            <!-- Top Notas -->
+            <div class="ranking-section">
+                <h2 class="ranking-title"><span class="medal">🥇</span> Top 20 - Mejores Promedios de Notas</h2>
+                <div id="rankingNotasContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Cargando datos...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top PAES -->
+            <div class="ranking-section">
+                <h2 class="ranking-title"><span class="medal">🎯</span> Top 20 - Mejores Puntajes PAES</h2>
+                <div id="rankingPaesContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Cargando datos...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best by RBD -->
+            <div class="ranking-section">
+                <h2 class="ranking-title"><span class="medal">🏫</span> Destacados por Establecimiento</h2>
+                <div id="rankingRbdContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Cargando datos...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>Aplicación Dashboard PAES 2025 Generada por IA y <strong>Ricardo Acevedo Carrasco</strong></p>
+            <p>** Enero 2026 ** Actualizado: <span id="footerDate"></span></p>
+        </div>
+    </footer>
+
+    <!-- Supabase API -->
+    <script src="supabase-api.js"></script>
+    <!-- App Logic -->
+    <script src="app-supabase.js"></script>
+    <script>
+        // Set footer date
+        document.getElementById('footerDate').textContent = new Date().toLocaleDateString('es-CL', {
+            day: 'numeric', month: 'long', year: 'numeric'
+        });
+    </script>
+</body>
+
+</html>
